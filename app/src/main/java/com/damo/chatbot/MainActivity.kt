@@ -275,7 +275,9 @@ class MainActivity : ComponentActivity() {
                         var isAvatarMode by remember { mutableStateOf(true) }
 
                         Scaffold(
-                            modifier = Modifier.fillMaxSize(),
+                            modifier = Modifier
+                                .fillMaxSize()
+                                .imePadding(),
                             containerColor = BackgroundColor,
                             topBar = {
                                 // Tu cabecera original intacta (sin los 3 puntos)
