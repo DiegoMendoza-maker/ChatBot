@@ -64,7 +64,9 @@ import androidx.compose.foundation.Image
 import androidx.compose.ui.res.painterResource
 //para gifs
 import android.os.Build
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.text.TextStyle
 import coil.ImageLoader
 import coil.compose.rememberAsyncImagePainter
 import coil.decode.ImageDecoderDecoder
@@ -273,6 +275,7 @@ class MainActivity : ComponentActivity() {
                     AppState.Chat -> {
                         // Variable que controla el interruptor (true = empieza con el muñequito)
                         var isAvatarMode by remember { mutableStateOf(true) }
+                        var lastSpokenMessage by remember { mutableStateOf("") }
 
                         Scaffold(
                             modifier = Modifier
@@ -323,6 +326,8 @@ class MainActivity : ComponentActivity() {
                                 AvatarScreen(
                                     messages = chatViewModel.messages,
                                     isLoading = chatViewModel.isLoading,
+                                    lastSpokenMessage = lastSpokenMessage,
+                                    onMessageSpoken = { lastSpokenMessage = it },
                                     // Le mandamos la función para hablar
                                     speakText = { textoCompleto ->
                                         // 1. Limpiamos el texto de emojis primero
@@ -591,6 +596,10 @@ fun UserInputBar(
                     .weight(1f)
                     .clip(RoundedCornerShape(24.dp)),
                 placeholder = { Text("Escribe un mensaje...") },
+                textStyle = TextStyle(
+                    color = Color.Black, // O el color oscuro que prefieras
+                    fontSize = 16.sp
+                ),
                 colors = TextFieldDefaults.colors(
                     focusedContainerColor = Color(0xFFF5F5F5),
                     unfocusedContainerColor = Color(0xFFF5F5F5),
@@ -628,21 +637,15 @@ fun UserInputBar(
 fun AvatarScreen(
     messages: List<ChatMessage>,
     isLoading: Boolean,
+    lastSpokenMessage: String,
+    onMessageSpoken: (String) -> Unit,
     speakText: (String) -> Unit, // Recibe la función de voz
     modifier: Modifier = Modifier
 ) {
     // Buscamos el último mensaje del bot para ponerlo debajo del muñequito
-    val lastBotMessage = messages.lastOrNull { !it.isUser }?.text ?: " "
+    val lastBotMessage = messages.lastOrNull { !it.isUser }?.text ?: ""
     val context = LocalContext.current
-
     var faseAnimacion by remember { mutableStateOf("NEUTRAL") }
-
-    // Cada vez que el mensaje cambie y deje de cargar, lo hablará
-    LaunchedEffect(lastBotMessage, isLoading) {
-        if (!isLoading) {
-            speakText(lastBotMessage)
-        }
-    }
 
     // 1. CONFIGURAR EL MOTOR DE COIL PARA REPRODUCIR GIFS
     // Detecta la versión de Android para usar el mejor reproductor disponible
@@ -667,18 +670,33 @@ fun AvatarScreen(
         verticalArrangement = Arrangement.Center
     ) {
 
-        LaunchedEffect(isLoading) {
+        LaunchedEffect(lastBotMessage) {
+            // Solo hablamos si:
+            // 1. No está cargando
+            // 2. El mensaje no está vacío
+            // 3. El mensaje es DIFERENTE al último que ya hablamos
+            if (lastBotMessage.isNotBlank() && lastBotMessage != lastSpokenMessage) {
+                speakText(lastBotMessage)
+                onMessageSpoken(lastBotMessage)
+            }
+        }
+
+        LaunchedEffect(lastBotMessage, isLoading) {
             if (isLoading) {
-                // Arrancamos la transición
                 faseAnimacion = "EMPEZANDO"
-
-                // AQUÍ PON EL TIEMPO EXACTO QUE DURA TU PRIMER GIF
                 delay(400)
-
-                // Verificamos que Gemini no haya respondido súper rápido antes de cambiar al ciclo
                 if (isLoading) {
                     faseAnimacion = "PENSANDO_CICLO"
                 }
+            } else if (lastBotMessage.isNotBlank() && lastBotMessage != lastSpokenMessage){
+                faseAnimacion = "TERMINANDO_PENSAR"
+                delay(450)
+                faseAnimacion = "HABLANDO"
+                delay(6000)
+                faseAnimacion = "FINALIZANDO"
+                delay(5000) // Duración de tu GIF de despedida
+                faseAnimacion = "NEUTRAL"
+                onMessageSpoken(lastBotMessage)
             } else {
                 faseAnimacion = "NEUTRAL"
             }
@@ -688,6 +706,9 @@ fun AvatarScreen(
         val gifOrigen = when (faseAnimacion) {
             "EMPEZANDO" -> R.drawable.bot_to_think
             "PENSANDO_CICLO" -> R.drawable.thinking
+            "TERMINANDO_PENSAR" -> R.drawable.to_idea
+            "HABLANDO" -> R.drawable.idea
+            "FINALIZANDO" -> R.drawable.to_idle
             else -> R.drawable.bot_neutral
         }
 
