@@ -77,6 +77,7 @@ enum class AppState { Welcome, Questions, Chat }
 
 // Definimos colores personalizados basados en el diseño de la imagen
 val BackgroundColor = Color(0xFFAAC8E6)
+val BackgroundColor2 = Color(0xFFFF3755)
 val BotBubbleColor = Color(0xFFF1F1F1) // Gris claro
 val UserBubbleColor = Color(0xFFBE0064)
 val BotTextColor = Color.Black
@@ -275,6 +276,7 @@ class MainActivity : ComponentActivity() {
 
                         Scaffold(
                             modifier = Modifier.fillMaxSize(),
+                            containerColor = BackgroundColor,
                             topBar = {
                                 // Tu cabecera original intacta (sin los 3 puntos)
                                 ChatHeader()
@@ -367,7 +369,7 @@ fun ChatHeader() {
                     painter = painterResource(id = R.drawable.perfil), // Aquí está el truco
                     contentDescription = "Mi foto de perfil",
                     modifier = Modifier
-                        .size(40.dp)
+                        .size(70.dp)
                         .clip(CircleShape)
                 )
                 Spacer(modifier = Modifier.width(12.dp))
@@ -375,12 +377,13 @@ fun ChatHeader() {
                     Text(
                         text = "Circuit",
                         fontWeight = FontWeight.Bold,
-                        fontSize = 18.sp
+                        fontSize = 20.sp,
+                        color = Color(0xFFFFF0F5)
                     )
                     Text(
                         text = "Online",
-                        color = Color(0xFF4CAF50), // Verde online
-                        fontSize = 12.sp
+                        color = Color(0xFFFFF0F5), // Verde online
+                        fontSize = 14.sp
                     )
                 }
             }
@@ -391,7 +394,7 @@ fun ChatHeader() {
         //    }
         //},
         colors = TopAppBarDefaults.topAppBarColors(
-            containerColor = MaterialTheme.colorScheme.surface,
+            containerColor = BackgroundColor2,
             titleContentColor = MaterialTheme.colorScheme.onSurface
         )
     )
@@ -419,7 +422,7 @@ fun ChatMessagesList(
         state = listState,
         modifier = modifier
             .fillMaxSize()
-            .background(Color(0xFFF9F9F9)) // Fondo muy claro para el chat
+            .background(BackgroundColor) // Fondo muy claro para el chat
             .padding(horizontal = 8.dp),
         contentPadding = PaddingValues(top = 8.dp, bottom = 8.dp)
     ) {
@@ -547,7 +550,7 @@ fun UserInputBar(
     Surface(
         modifier = Modifier.fillMaxWidth().imePadding(),
         tonalElevation = 2.dp,
-        color = MaterialTheme.colorScheme.surface
+        color = BackgroundColor2
     ) {
         Row(
             modifier = Modifier
@@ -575,7 +578,7 @@ fun UserInputBar(
                     println("El dispositivo no soporta entrada de voz nativa.")
                 }
             }) {
-                Icon(imageVector = Icons.Default.Mic, contentDescription = "Voz", tint = Color.Gray)
+                Icon(imageVector = Icons.Default.Mic, contentDescription = "Voz", tint = Color(0xFFDCFFFF))
             }
 
             // Campo de texto principal
@@ -605,7 +608,7 @@ fun UserInputBar(
                 enabled = textValue.isNotBlank() && !isLoading,
                 modifier = Modifier.size(48.dp),
                 colors = IconButtonDefaults.filledIconButtonColors(
-                    containerColor = UserBubbleColor,
+                    containerColor = Color.White,
                     disabledContainerColor = Color.LightGray
                 )
             ) {
@@ -656,7 +659,7 @@ fun AvatarScreen(
     Column(
         modifier = modifier
             .fillMaxSize()
-            .background(Color(0xFFF9F9F9))
+            .background(BackgroundColor)
             .padding(16.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center
@@ -668,7 +671,7 @@ fun AvatarScreen(
                 faseAnimacion = "EMPEZANDO"
 
                 // AQUÍ PON EL TIEMPO EXACTO QUE DURA TU PRIMER GIF
-                delay(1000)
+                delay(400)
 
                 // Verificamos que Gemini no haya respondido súper rápido antes de cambiar al ciclo
                 if (isLoading) {
@@ -690,7 +693,7 @@ fun AvatarScreen(
         Image(
             painter = rememberAsyncImagePainter(model = gifOrigen, imageLoader = imageLoader),
             contentDescription = "Avatar GIF Animado",
-            modifier = Modifier.size(300.dp)
+            modifier = Modifier.size(10000.dp)
         )
 
         Spacer(modifier = Modifier.height(32.dp))
