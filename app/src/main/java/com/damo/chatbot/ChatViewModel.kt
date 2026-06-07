@@ -34,15 +34,11 @@ class ChatViewModel : ViewModel() {
 
     }
 
-    fun iniciarChatConNombre(nombreUsuario: String) {
+    fun iniciarChat(promptOculto: String, nombreUsuario: String) {
         isLoading = true
 
         viewModelScope.launch {
             try {
-                // Inyectamos el nombre directamente en el prompt oculto
-                val promptOculto = "Hola. Me llamo $nombreUsuario. Por favor salúdame por mi nombre para iniciar nuestra conversación de forma muy cálida. Usa tu personalidad empática. No menciones que te pedí que me saludaras." +
-                        "Contestame en menos de 2 lineas."
-
                 val response = chatSession.sendMessage(promptOculto)
                 val botResponseText = response.text
 

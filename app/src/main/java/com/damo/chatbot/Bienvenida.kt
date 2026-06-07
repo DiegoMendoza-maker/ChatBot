@@ -1,6 +1,9 @@
 package com.damo.chatbot
 
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.foundation.interaction.collectIsPressedAsState
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
@@ -19,70 +22,61 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Text
+import androidx.compose.runtime.remember
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.sp
+import kotlin.random.Random
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.setValue
 
 @Composable
 fun WelcomeScreen(
-    nombreValue: String,
-    onNombreChange: (String) -> Unit,
     onEntrarClick: () -> Unit
 ) {
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .background(Color(0xFFF9F9F9))
+            .background(BackgroundColor)
             .padding(24.dp),
         verticalArrangement = Arrangement.Center,
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        // Icono superior
-        Icon(
-            imageVector = Icons.Default.SmartToy,
-            contentDescription = "Bot",
-            modifier = Modifier.size(80.dp),
-            tint = UserBubbleColor
+        Image(
+            painter = painterResource(id = R.drawable.perfil), // Aquí está el truco
+            contentDescription = "Mi foto de perfil",
+            modifier = Modifier
+                .size(200.dp)
+                //.clip(CircleShape)
         )
-        Spacer(modifier = Modifier.height(24.dp))
+        //Spacer(modifier = Modifier.height(10.dp))
 
         Text(
-            text = "¡Bienvenido a tu espacio seguro!",
+            text = "¡Hola! Me llamo Circuit",
             fontWeight = FontWeight.Bold,
             fontSize = 22.sp,
-            color = Color.Black
-        )
-        Spacer(modifier = Modifier.height(8.dp))
-        Text(
-            text = "¿Cómo te gustaría que te llame?",
-            fontSize = 16.sp,
-            color = Color.Gray
-        )
-        Spacer(modifier = Modifier.height(24.dp))
-
-        // Campo para escribir el nombre
-        OutlinedTextField(
-            value = nombreValue,
-            onValueChange = onNombreChange,
-            label = { Text("Tu nombre o apodo") },
-            singleLine = true,
-            modifier = Modifier.fillMaxWidth()
+            color = Color.Black,
+            textAlign = TextAlign.Center
         )
         Spacer(modifier = Modifier.height(24.dp))
 
         // Botón para iniciar (se deshabilita si está vacío)
         Button(
             onClick = onEntrarClick,
-            enabled = nombreValue.isNotBlank(),
+            //enabled = nombreValue.isNotBlank(),
             modifier = Modifier
                 .fillMaxWidth()
                 .height(50.dp),
             shape = RoundedCornerShape(25.dp),
             colors = ButtonDefaults.buttonColors(containerColor = UserBubbleColor)
         ) {
-            Text("Comenzar a platicar", fontSize = 16.sp)
+            Text("Continuar", fontSize = 16.sp)
         }
     }
 }
