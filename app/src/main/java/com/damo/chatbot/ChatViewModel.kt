@@ -7,6 +7,7 @@ import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.google.ai.client.generativeai.type.content
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import java.text.SimpleDateFormat
 import java.util.Date
@@ -29,6 +30,8 @@ class ChatViewModel : ViewModel() {
     // Estado para el texto que el usuario está escribiendo
     var userInputText by mutableStateOf("")
 
+    var isWaitingForResponse by mutableStateOf(false)
+
     init {
         // Mensaje de bienvenida inicial del bot
 
@@ -38,6 +41,7 @@ class ChatViewModel : ViewModel() {
         isLoading = true
 
         viewModelScope.launch {
+            delay(20000)
             try {
                 val response = chatSession.sendMessage(promptOculto)
                 val botResponseText = response.text
@@ -52,9 +56,20 @@ class ChatViewModel : ViewModel() {
                     )
                 }
             } catch (e: Exception) {
+                val mensajeError = e.message ?: ""
+
+                // Busca el número de segundos en el mensaje de error
+                val segundos = Regex("retry in ([0-9]+)").find(mensajeError)?.groupValues?.get(1)
+
+                val mensajeUsuario = if (segundos != null) {
+                    "¡Ups! Estoy un poco saturado en este momento 🤖⚡ Regresa en $segundos segundos e intentamos de nuevo, ¿va?"
+                } else {
+                    "¡Qué onda $nombreUsuario! Parece que no tengo conexión, pero aquí te espero. ✨"
+                }
+
                 messages.add(
                     ChatMessage(
-                        text = "¡Qué onda $nombreUsuario! Parece que no tengo conexión, pero aquí te espero. ✨",
+                        text = mensajeUsuario,
                         isUser = false,
                         time = getCurrentFormattedTime()
                     )
@@ -73,9 +88,10 @@ class ChatViewModel : ViewModel() {
     /**
      * Lógica para enviar el mensaje del usuario y obtener respuesta de Gemini
      */
-    fun sendMessage() {
+    fun sendMessage(nombreUsuario: String) {
         val textToSend = userInputText.trim()
         if (textToSend.isEmpty() || isLoading) return // Evitar enviar vacío o doble envío
+        if (isWaitingForResponse) return // Si ya estamos esperando, bloqueamos el envío
 
         // A. Añadir mensaje del usuario a la lista local inmediatamente
         val userMessage = ChatMessage(
@@ -91,6 +107,7 @@ class ChatViewModel : ViewModel() {
 
         // B. Enviar a Gemini de forma asíncrona usando Corrutinas
         viewModelScope.launch {
+            delay(20000)
             try {
                 // sendMessage suspende la ejecución hasta obtener respuesta
                 val response = chatSession.sendMessage(textToSend)
@@ -112,7 +129,24 @@ class ChatViewModel : ViewModel() {
 
             } catch (e: Exception) {
                 // D. Manejo de errores de conexión o API
-                addErrorMessage("Error de conexión: ${e.localizedMessage ?: "Inténtalo de nuevo."}")
+                val mensajeError = e.message ?: ""
+
+                // Busca el número de segundos en el mensaje de error
+                val segundos = Regex("retry in ([0-9]+)").find(mensajeError)?.groupValues?.get(1)
+
+                val mensajeUsuario = if (segundos != null) {
+                    "¡Ups! Estoy un poco saturado en este momento 🤖⚡ Regresa en $segundos segundos e intentamos de nuevo, ¿va?"
+                } else {
+                    "¡Qué onda $nombreUsuario! Parece que no tengo conexión, pero aquí te espero. ✨"
+                }
+
+                messages.add(
+                    ChatMessage(
+                        text = mensajeUsuario,
+                        isUser = false,
+                        time = getCurrentFormattedTime()
+                    )
+                )
             } finally {
                 // E. Finalizar estado de carga pase lo que pase
                 isLoading = false

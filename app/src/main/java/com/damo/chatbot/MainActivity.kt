@@ -64,6 +64,8 @@ import androidx.compose.foundation.Image
 import androidx.compose.ui.res.painterResource
 //para gifs
 import android.os.Build
+import androidx.compose.animation.Crossfade
+import androidx.compose.animation.core.tween
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.TextStyle
@@ -86,6 +88,7 @@ val BotTextColor = Color.Black
 val UserTextColor = Color.White
 val TimeTextColor = Color.Gray
 
+var isSpeaking by mutableStateOf(false)
 // Instancia global que ya tenías (mantenerla aquí está bien para este ejemplo)
 val generativeModel = GenerativeModel(
     modelName = "gemini-3.5-flash",
@@ -329,7 +332,9 @@ class MainActivity : ComponentActivity() {
                                     UserInputBar(
                                         textValue = chatViewModel.userInputText,
                                         onTextChange = { chatViewModel.onUserInputChanged(it) },
-                                        onSendClick = { chatViewModel.sendMessage() },
+                                        onSendClick = {
+                                            val nombreUsuario = sharedPreferences.getString("NOMBRE_USUARIO", "") ?: ""
+                                            chatViewModel.sendMessage(nombreUsuario) },
                                         isLoading = chatViewModel.isLoading
                                     )
                                 }
@@ -630,7 +635,7 @@ fun UserInputBar(
             // Botón de enviar
             FilledIconButton(
                 onClick = onSendClick,
-                enabled = textValue.isNotBlank() && !isLoading,
+                enabled = textValue.isNotBlank() && !isLoading && !isSpeaking,
                 modifier = Modifier.size(48.dp),
                 colors = IconButtonDefaults.filledIconButtonColors(
                     containerColor = Color.White,
@@ -685,6 +690,7 @@ fun AvatarScreen(
     ) {
 
         LaunchedEffect(lastBotMessage) {
+            isSpeaking = true
             // Solo hablamos si:
             // 1. No está cargando
             // 2. El mensaje no está vacío
@@ -693,6 +699,7 @@ fun AvatarScreen(
                 speakText(lastBotMessage)
                 onMessageSpoken(lastBotMessage)
             }
+            isSpeaking = false
         }
 
         LaunchedEffect(lastBotMessage, isLoading) {
@@ -704,7 +711,7 @@ fun AvatarScreen(
                 }
             } else if (lastBotMessage.isNotBlank() && lastBotMessage != lastSpokenMessage){
                 faseAnimacion = "TERMINANDO_PENSAR"
-                delay(450)
+                delay(200)
                 faseAnimacion = "HABLANDO"
                 delay(6000)
                 faseAnimacion = "FINALIZANDO"
@@ -727,11 +734,17 @@ fun AvatarScreen(
         }
 
         // DIBUJAR EL GIF UTILIZANDO COIL
-        Image(
-            painter = rememberAsyncImagePainter(model = gifOrigen, imageLoader = imageLoader),
-            contentDescription = "Avatar GIF Animado",
-            modifier = Modifier.size(10000.dp)
-        )
+        Crossfade(
+            targetState = gifOrigen,
+            animationSpec = tween(durationMillis = 100), // 200ms de transición suave
+            label = "avatar_transition"
+        ) { gifActual ->
+            Image(
+                painter = rememberAsyncImagePainter(model = gifActual, imageLoader = imageLoader),
+                contentDescription = "Avatar GIF Animado",
+                modifier = Modifier.size(10000.dp)
+            )
+        }
 
         Spacer(modifier = Modifier.height(32.dp))
 
@@ -740,7 +753,7 @@ fun AvatarScreen(
             Text(
                 text = "Pensando...",
                 fontSize = 18.sp,
-                color = Color.Gray
+                color = Color.White
             )
         }
 
